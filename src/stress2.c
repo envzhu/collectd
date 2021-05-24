@@ -60,7 +60,7 @@ struct stress_thread_data {
 	pthread_attr_t		 std_attr;
 	int			 std_thread_id;
 
-	struct stress_metric	*std_stress_metrics;
+	struct stress_metric	**std_stress_metrics;
 };
 
 struct stress_timer {
@@ -561,7 +561,7 @@ void *stress_proc(void *data)
 	thread_data = (struct stress_thread_data *)data;
 	for (i = 0; i < stress_environment_g.se_metric_number; i++) {
 		stress_proc_metric(thread_data->std_thread_id,
-				   &thread_data->std_stress_metrics[i]);
+				   thread_data->std_stress_metrics[i]);
 	}
 	return 0;
 }
@@ -891,9 +891,9 @@ static int stress_setup_environment_thread(void)
 		thread_data = &stress_environment_g.se_thread_datas[i];
 		thread_data->std_thread_id = i;
 		pthread_attr_init(&thread_data->std_attr);
-		struct stress_metric *stress_metrics =
+		struct stress_metric **stress_metrics =
 				calloc(stress_environment_g.se_metric_number,
-				       sizeof(struct stress_metric));
+				       sizeof(struct stress_metric *));
 		if (!stress_metrics) {
 			ERROR("stress2: failed to allocate metric memory");
 			goto out;
@@ -902,7 +902,7 @@ static int stress_setup_environment_thread(void)
 		list_for_each_entry(stress_metric,
 				    &stress_environment_g.se_metric_head,
 				    sm_metric_linkage) {
-			stress_metrics[metric_index] = *stress_metric;
+			stress_metrics[metric_index] = stress_metric;
 			variables = calloc(1,
 				stress_metric->sm_variable_number *
 				sizeof(struct stress_variable));
@@ -910,7 +910,7 @@ static int stress_setup_environment_thread(void)
 				status = -ENOMEM;
 				goto out;
 			}
-			stress_metrics[metric_index].sm_variables = variables;
+			stress_metrics[metric_index]->sm_variables = variables;
 			variable_index = 0;
 			list_for_each_entry(variable_type,
 					    &stress_metric->sm_variable_types,
