@@ -83,6 +83,7 @@ struct stress_metric {
 	char				 sm_tsdb_tags[STRESS_MAX_NAME];
 	/* How many times this plugin has been readed*/
 	int				 sm_read_number;
+	int				 *sm_read_number_pointer;
 	struct list_head		 sm_metric_linkage;
 	regex_t				 sm_regex;
 };
@@ -284,7 +285,7 @@ static int stress_variable_field_get(char *field, size_t size, const char *name,
 	char variable_value[STRESS_MAX_NAME];
 	struct stress_variable_type *type;
 	struct stress_variable *variable;
-	int read_number = sm->sm_read_number;
+  int read_number = *sm->sm_read_number_pointer;
 	int value;
 	int i;
 
@@ -903,6 +904,7 @@ static int stress_setup_environment_thread(void)
 				    &stress_environment_g.se_metric_head,
 				    sm_metric_linkage) {
 			stress_metrics[metric_index] = *stress_metric;
+      stress_metrics[metric_index].sm_read_number_pointer = &(stress_metric->sm_read_number);
 			variables = calloc(1,
 				stress_metric->sm_variable_number *
 				sizeof(struct stress_variable));
